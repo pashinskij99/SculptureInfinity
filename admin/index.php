@@ -1,16 +1,15 @@
 <?php 
-
 session_start();
 
 $login = "admin";
 $password = "12345";
 
-if($_SESSION['login'] === $login && $_SESSION['password'] === $password) {
-   header('Location: /sculpture(pash)/admin/content.php');
-} else {
-   echo "Bad";
-}
 
+   if($_SESSION['login'] === $login && $_SESSION['password'] === $password) {
+      header('Location: /sculpture(pash)/admin/content.php');
+   } else {
+      echo "Bad";
+   }
 ?>
 
 <!DOCTYPE html>

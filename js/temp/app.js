@@ -278,7 +278,6 @@ var Apps = function () {
                 this.generateSegmentsLength();
             } catch {
             }
-
         }
 
         translateGrometry( geometry, offset ){
@@ -312,8 +311,6 @@ var Apps = function () {
             this.nextGeometry = this.patchGeometry( rad, spline, this.nextGeometry );
 
             this.nextGeometry = new THREE.BufferGeometry().fromGeometry(this.nextGeometry);
-
-
 
             nMax = this.nextGeometry.attributes.position.count
 
@@ -350,6 +347,8 @@ var Apps = function () {
             this.geometry = this.getGeometry();
             this.material = this.getMaterial();
             this.mesh = new THREE.Mesh( this.geometry, this.material );
+
+            console.log(this.mesh.material.side);
 
             globalVal.lastMesh = this.mesh
             return this.mesh;
@@ -388,7 +387,7 @@ var Apps = function () {
                     -nextPoint.x,
                     nextPoint.y,
                     -nextPoint.z,
-                ) );
+                ));
             }
 
             const nextCurve = new CatmullRomCurve3( points, false, 'catmullrom', 0.6 ); // 0.8
@@ -467,7 +466,6 @@ var Apps = function () {
                 }
                 nextSegmentsPackSignature = !nextSegmentsPackSignature;
             }
-
             return finallySegments;
         }
 
@@ -543,7 +541,6 @@ var Apps = function () {
             finallyPointsPath = this.filterPointsArray( minLength, pointsPath, finallyPointsPath );
             return finallyPointsPath;
         }
-
 
         generatePoints( minLength = 8 ) {
             let resultPoints;
@@ -939,7 +936,6 @@ var Apps = function () {
             let res = exporter.parse( globalVal.lastMesh );
 
             var a = document.getElementById('downloadAnchorElem');
-
 
             var dataStr = JSON.stringify(res);
             var blob = new Blob([dataStr], {type: "octet/stream"});
