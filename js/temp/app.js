@@ -976,7 +976,7 @@ var Apps = function () {
          camera.rotation.y = 1.55
          camera.rotation.z = -1.57
          const textureLoader = new THREE.TextureLoader()
-         const fonForPlane = textureLoader.load( '../../img/FON_1.jpg' );
+         const fonForPlane = textureLoader.load( 'img/FON_1.jpg' );
          /*
           * lights
           * */
