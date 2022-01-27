@@ -10,6 +10,7 @@ const globalVal = {
    renderObj: null,
    guiMenuIsCreate: null,
    isTimeGenerate: false,
+   trackballControls: null
 }
 
 let SCENE = null;
@@ -199,7 +200,7 @@ var Apps = function () {
    var container, stats
 
    var camera, scene, renderer
-   var group
+   var group, group1
 
    var targetRotation = 5.2
    var targetRotationOnMouseDown = 0
@@ -248,13 +249,11 @@ var Apps = function () {
          const tz = 0;
    
          return optionalTarget.set( tx, ty, tz ).multiplyScalar( this.scale );
-   
       }
    
    }
    class SpecialCurveLine {
       constructor(options = {}) {
-         try {
             this.cycles = options.cycles || Math.PI * 15
             this.pointA = options.pointA || new THREE.Vector3(0, 11100, 0)
             this.pointB = options.pointB || new THREE.Vector3(0, -11100, 0)
@@ -264,19 +263,20 @@ var Apps = function () {
             if (THREE.Object3D) {
                this.obj = new THREE.Object3D()
             }
-            // 7
             this.points = this.generatePoints(5)
-            // this.nurbsKnot = this.generateNurbsKnotsByPoints()
             this.curve = this.generateCurve()
             this.mesh = this.getMesh()
+
             this.size = globalVal.size
 
-            // console.log(nextCurve);
+            this.mesh.meshForShadow.scale.set(0.3, 0.3, 0.3)
+            this.mesh.meshForShadow.material.transparent = true
+            this.mesh.meshForShadow.material.opacity = 0
+            this.obj.add(this.mesh.mesh, this.mesh.meshForShadow)
 
-            this.obj.add(this.mesh)
+            this.mesh.meshForShadow.castShadow = true
 
             this.generateSegmentsLength()
-         } catch {}
       }
 
       translateGrometry(geometry, offset) {
@@ -288,27 +288,37 @@ var Apps = function () {
          return geometry
       }
 
-      patchGeometry(rad, tubeGeometry, preLinePoints, endLinePoints) {
-         let preLineA = new THREE.TubeGeometry(preLinePoints, 16, rad, 16) //this.postPoints
-         tubeGeometry.merge(preLineA)
-
-         let preLineB = new THREE.TubeGeometry(endLinePoints, 16, rad, 16) //this.postPoints
-         tubeGeometry.merge(preLineB)
+      patchGeometry(rad, tubeGeometry, points) {
+         const splinePointA = points.points[0]
+         const splinePointB = points.points[points.points.length - 1]
+         let spherePatchA = new THREE.SphereGeometry(rad, 10, 10)
+         spherePatchA = this.translateGrometry(spherePatchA, splinePointA)
+         tubeGeometry.merge(spherePatchA)
+         let spherePatchB = new THREE.SphereGeometry(rad, 10, 10)
+         spherePatchB = this.translateGrometry(spherePatchB, splinePointB)
+         tubeGeometry.merge(spherePatchB)
 
          return tubeGeometry
       }
 
       getGeometry(size, val) {
+         globalVal.points =
+                globalVal.points && globalVal.oldPoints
+                    ? globalVal.points
+                    : this.nextCurve
          const rad = globalVal.size ? globalVal.size : 3
-         let nextGeometry = new THREE.TubeGeometry( this.nextCurve, 256, rad, 16)
-         // nextGeometry = this.patchGeometry(rad, nextGeometry, this.preCurve, this.endCurve )
+         let nextGeometry = new THREE.TubeGeometry( globalVal.points, 256, rad, 16)
+         // nextGeometry = new THREE.BufferGeometry().fromGeometry( nextGeometry );
+         // let nMax = nextGeometry.attributes.position.count;
+         nextGeometry = this.patchGeometry(rad, nextGeometry, globalVal.points )
          return nextGeometry
       }
 
       getMaterial() {
          switch (globalVal.lastMaterial) {
             case 'metal':
-               return new THREE.MeshPhongMaterial({
+               return {
+                  material: new THREE.MeshPhongMaterial({
                   shininess: 30,
                   shading: THREE.SmoothShading,
                   vertexColors: false,
@@ -318,25 +328,51 @@ var Apps = function () {
                   bumpMap: texture1,
                   bumpScale: 8.92,
                   side: THREE.DoubleSide,
-               })
+               }) ,
+                  materialForShadowMesh: new THREE.MeshPhongMaterial({
+                     shininess: 30,
+                     shading: THREE.SmoothShading,
+                     vertexColors: false,
+                     blending: THREE.AdditiveBlending,
+                     map: globalVal.vg,
+                     reflectivity: 0.05,
+                     bumpMap: texture1,
+                     bumpScale: 8.92,
+                     side: THREE.DoubleSide,
+                  })
+               }
                break
             default:
-               return new THREE.MeshPhongMaterial({
-                  side: THREE.DoubleSide,
-                  shading: THREE.SmoothShading,
-                  opacity: 1,
-                  map: plastic,
-                  emissive: 0x8f8f8f,
-                  color: 0xffffff,
-               })
+               return {
+                  material: new THREE.MeshPhongMaterial({
+                     side: THREE.DoubleSide,
+                     shading: THREE.SmoothShading,
+                     opacity: 1,
+                     map: plastic,
+                     emissive: 0x8f8f8f,
+                     color: 0xffffff,
+                  }),
+                  materialForShadowMesh: new THREE.MeshPhongMaterial({
+                     side: THREE.DoubleSide,
+                     shading: THREE.SmoothShading,
+                     opacity: 1,
+                     map: plastic,
+                     emissive: 0x8f8f8f,
+                     color: 0xffffff,
+                  })
+               }
          }
       }
       getMesh() {
          this.geometry = this.getGeometry()
          this.material = this.getMaterial()
-         this.mesh = new THREE.Mesh(this.geometry, this.material)
+         this.mesh = new THREE.Mesh(this.geometry, this.material.material)
+         this.meshForShadow = new THREE.Mesh(this.geometry, this.material.materialForShadowMesh)
          globalVal.lastMesh = this.mesh
-         return this.mesh
+         return {
+            mesh: this.mesh,
+            meshForShadow: this.meshForShadow
+         }
       }
 
       meshTestPoints() {
@@ -369,19 +405,19 @@ var Apps = function () {
          const currentVector = segment[ 1 ].clone().sub( segment[ 0 ].clone() );
          const currentNormal = currentVector.clone();
          currentNormal.normalize();
-         const distance = segment[ 1 ].distanceTo( segment[ 0 ] ) * .25;
+         const distance = segment[ 1 ].distanceTo( segment[ 0 ] ) * .55;
 
          let currentPoint = segment[ 1 ].clone().sub( currentNormal.clone().multiplyScalar( 0 ) );
          let nextNormal = currentNormal.clone();
          let currentDistance = distance;
 
-         const minDistance = distance * 0.1;
-         const distanceRange = ( distance - minDistance ) * 0.2;
+         const minDistance = distance * 0.2;
+         const distanceRange = ( distance - minDistance ) * 1.5;
          const getDistance = ( alpha ) => {
             return minDistance  + ( distanceRange * alpha );
          };
 
-         const steps = 6;
+         const steps = 12;
 
          const points = [ segment[ 1 ].clone() ];
 
@@ -417,58 +453,88 @@ var Apps = function () {
             )
          }
 
+         points.push(
+             new THREE.Vector3(0, 0, 0)
+         )
+
+         points.unshift(
+             new THREE.Vector3(0, 0, 0)
+         )
+
          let nextCurve = new CatmullRomCurve3(
              points,
              false,
              'catmullrom',
-             0.6
+             0.9
          ) // 1 круглые  // 0.7 более ровные
 
-         const halfPathPoints = nextCurve.getPoints( 64 );
-         console.log( {
-            halfPathPoints
-         } );
+         // points.pop()
 
-         const startSegment = [
-            this.points[ 1 ].clone(),
-            this.points[ 0 ].clone()
-         ];
+         const halfPathPoints = nextCurve.getPoints( 50 );
+         // console.log( {
+         //    halfPathPoints
+         // } );
 
-         const endSegment = [
-            this.points[ this.points.length - 2 ].clone(),
-            this.points[ this.points.length - 1 ].clone()
-         ];
-         //
          // const startSegment = [
-         //    halfPathPoints[ 1 ].clone(),
-         //    halfPathPoints[ 0 ].clone()
+         //    this.points[ 1 ].clone(),
+         //    this.points[ 0 ].clone()
          // ];
          //
          // const endSegment = [
-         //    halfPathPoints[ halfPathPoints.length - 2 ].clone(),
-         //    halfPathPoints[ halfPathPoints.length - 1 ].clone()
+         //    this.points[ this.points.length - 2 ].clone(),
+         //    this.points[ this.points.length - 1 ].clone()
          // ];
+         //
+         const startSegment = [
+            halfPathPoints[ 1 ].clone(),
+            halfPathPoints[ 0 ].clone()
+         ];
 
-         const prePoints = this.getToCenterPositions( startSegment );
-         const postPoints = this.getToCenterPositions( endSegment );
+         const endSegment = [
+            halfPathPoints[ halfPathPoints.length - 2 ].clone(),
+            halfPathPoints[ halfPathPoints.length - 1 ].clone()
+         ];
+
+         // const prePoints = this.getToCenterPositions( startSegment );
+         // const postPoints = this.getToCenterPositions( endSegment );
 
          this.pointsForStartTube = []
          this.pointsForLastTube = []
 
-         for( const nextPrePoint of prePoints ){
-            halfPathPoints.unshift( nextPrePoint );
-            // this.pointsForStartTube.push( nextPrePoint );
-         }
-
-         for( const nextPostPoint of postPoints ){
-            halfPathPoints.push( nextPostPoint );
-            // this.pointsForLastTube.push( nextPostPoint );
-         }
+         // for( const nextPrePoint of prePoints ){
+         //    halfPathPoints.unshift( nextPrePoint );
+         //    // this.pointsForStartTube.push( nextPrePoint );
+         // }
+         //
+         // for( const nextPostPoint of postPoints ){
+         //    halfPathPoints.push( nextPostPoint );
+         //    // this.pointsForLastTube.push( nextPostPoint );
+         // }
 
          nextCurve = new CatmullRomCurve3(
              halfPathPoints,
              false,
          ) // 1 круглые  // 0.7 более ровные
+
+         halfPathPoints.pop()
+         halfPathPoints.pop()
+         halfPathPoints.pop()
+         halfPathPoints.pop()
+         halfPathPoints.pop()
+         halfPathPoints.pop()
+         halfPathPoints.pop()
+         halfPathPoints.pop()
+         halfPathPoints.pop()
+
+         halfPathPoints.shift()
+         halfPathPoints.shift()
+         halfPathPoints.shift()
+         halfPathPoints.shift()
+         halfPathPoints.shift()
+         halfPathPoints.shift()
+         halfPathPoints.shift()
+         halfPathPoints.shift()
+         halfPathPoints.shift()
 
          this.nextCurve = nextCurve
       }
@@ -490,7 +556,7 @@ var Apps = function () {
          )
          nextRandomPoint.normalize()
          nextRandomPoint.multiplyScalar(
-            maxDistanceToCenter * (0.2 + Math.random() * 0.8)
+            maxDistanceToCenter * (0.3 + Math.random() * 0.7)
          )
          nextRandomPoint.y += yOffset + yAddOff
          return nextRandomPoint
@@ -499,7 +565,7 @@ var Apps = function () {
       generateSegmentsLength() {
          const minimalLength = 1155
          const maximumLength = 1220
-         const availableLineLength = 500
+         const availableLineLength = 1500
          let nextSegmentsPackSignature = Math.random() > 0.5 ? 1 : -1 // 1 \ -1
          const getRandomRange = (_min, _max) => {
             const a = Math.min(_min, _max)
@@ -731,10 +797,10 @@ var Apps = function () {
                fon[2].src = 'img/FON_3.jpg'
                fon[2].onload = function () {
                   lastFon = fon[0]
-                  document.getElementById('main').appendChild(lastFon)
+                  // document.getElementById('main').appendChild(lastFon)
                   init()
                   animate()
-                  guiObj.init()
+                  // guiObj.init()
                }
             }
          }
@@ -752,11 +818,12 @@ var Apps = function () {
       if (isTimeGenerate) {
          interval = setInterval(() => {
             globalVal.oldPoints = false
+            console.log('createguiadd')
             generateCurve()
-         }, (lastTime = 5000))
+         }, (lastTime = 8000))
          const btnTimerMakeSculpture = guiMenu
             .add(renderObj, 'radiousTimer')
-            .min(5)
+            .min(8)
             .max(30)
             .step(1)
             .name('Time')
@@ -844,11 +911,7 @@ var Apps = function () {
          .onChange(() => {
             globalVal.guiMenuIsCreate = guiMenu
             globalVal.isTimeGenerate = !globalVal.isTimeGenerate
-            createGuiMenu(
-               globalVal.isTimeGenerate,
-               globalVal.renderObj,
-               globalVal.guiMenuIsCreate
-            )
+            // createGuiMenu(globalVal.isTimeGenerate, globalVal.renderObj, globalVal.guiMenuIsCreate)
          })
 
       globalVal.guiMenuIsCreate = guiMenu
@@ -872,7 +935,7 @@ var Apps = function () {
             isTimeGenerate: () => {},
             color: 0xa9b3b3,
             radiousSize: 3,
-            radiousTimer: 5,
+            radiousTimer: 8,
             countPoints: 20,
             firstSize: () => {},
             secondSize: () => {},
@@ -893,11 +956,7 @@ var Apps = function () {
             changeTexture: function () {},
          }
          globalVal.renderObj = renderObj
-         createGuiMenu(
-            globalVal.isTimeGenerate,
-            renderObj,
-            globalVal.guiMenuIsCreate
-         )
+         // createGuiMenu(globalVal.isTimeGenerate, renderObj, globalVal.guiMenuIsCreate)
       },
    }
    try {
@@ -916,43 +975,98 @@ var Apps = function () {
          camera.rotation.x = 1.61
          camera.rotation.y = 1.55
          camera.rotation.z = -1.57
+         const textureLoader = new THREE.TextureLoader()
+         const fonForPlane = textureLoader.load( '../../img/FON_1.jpg' );
          /*
           * lights
           * */
-         var ambiLight = new THREE.AmbientLight(0x111111)
+         // var ambiLight = new THREE.AmbientLight(0x111111)
+         var ambiLight = new THREE.AmbientLight(0xffffff)
+         ambiLight.intensity = .2
          scene.add(ambiLight)
          spotLight = new THREE.SpotLight(0xffffff)
          spotLight.position.set(300, 1000, 100)
          spotLight.target.position.set(0, 0, 0).normalize()
-         spotLight.shadowCameraNear = 0.91
+         spotLight.shadowCameraNear = 10.91
          spotLight.castShadow = true
          spotLight.shadowDarkness = 0.25
          spotLight.intensity = 0.99
          spotLight.shadowCameraVisible = false
          scene.add(spotLight)
 
+         const parametersForPlane = {
+            position: camera.position,
+            quaternion: camera.quaternion,
+            rotation: camera.rotation,
+            scaleForPlane: 1000
+         }
+
+         const planeGeometry = new THREE.PlaneBufferGeometry(1, 1),
+             planeMaterial = new THREE.MeshPhongMaterial({map: fonForPlane}),
+             planeMesh = new THREE.Mesh(planeGeometry, planeMaterial)
+         planeMesh.position.set(parametersForPlane.position.x - 1050, parametersForPlane.position.y + 20, parametersForPlane.position.z)
+         planeMesh.rotation.set(parametersForPlane.rotation.x, parametersForPlane.rotation.y, parametersForPlane.rotation.z)
+         planeMesh.scale.set(parametersForPlane.scaleForPlane * 1.5, parametersForPlane.scaleForPlane, 1)
+         planeMesh.receiveShadow = true
+         planeMesh.castShadow = false
+         planeMesh.name = "Plane"
+         scene.add(planeMesh)
+
+         console.log(scene);
+
+         const spotLightForShadow = new THREE.SpotLight(0xffffff, 0.4, 35600, Math.PI * 0.3),
+             spotLightForShadowTarget = spotLightForShadow.target
+         spotLightForShadow.castShadow = true
+         spotLightForShadow.position.set(parametersForPlane.position.x - 100 , parametersForPlane.position.y + 600, parametersForPlane.position.z - 1200 )
+         spotLightForShadow.shadow.mapSize.width = 5024;
+         spotLightForShadow.shadow.mapSize.height = 5024;
+
+         spotLightForShadow.shadow.camera.near = 500;
+         spotLightForShadow.shadow.camera.far = 2500;
+         spotLightForShadow.shadow.camera.fov = 40;
+         scene.add(spotLightForShadow)
+         scene.add(spotLightForShadowTarget)
+
+         // const spotLightForShadowHelper = new THREE.CameraHelper(spotLightForShadow.shadow.camera)
+         // scene.add(spotLightForShadowHelper)
+
+         // const track = new THREE.TrackballControls(camera, container)
+         // track.update()
+         // globalVal.trackballControls = track
+
+         // const anim = () => {
+         //    track.update()
+         //    requestAnimationFrame(anim)
+         // }
+
+         // console.log(camera) //position, quaternion, rotation
+         // console.log(planeMesh)
+
+         // const spotLightHelper = new THREE.SpotLightHelper( spotLight );
+         // scene.add( spotLightHelper );
+
          generateCurve(true, globalVal.size)
          //start!!!
          /*
           * floor
           * */
-         var geometry = new THREE.BoxGeometry(5, 10, 0.2)
-         THREE.ShaderLib['basic'].fragmentShader = basicFragmentShader(false)
-         var material = new THREE.MeshBasicMaterial()
-         var ground = new THREE.Mesh(geometry, material)
-         ground.scale.multiplyScalar(250)
-         ground.position.y = -200
-         ground.position.x = -50
-         ground.rotation.x = Math.PI / 2
-         ground.receiveShadow = true
-         scene.add(ground)
+         // var geometry = new THREE.BoxGeometry(5, 10, 0.2)
+         // THREE.ShaderLib['basic'].fragmentShader = basicFragmentShader(false)
+         // var material = new THREE.MeshBasicMaterial()
+         // var ground = new THREE.Mesh(geometry, material)
+         // ground.scale.multiplyScalar(250) // 250
+         // ground.position.y = -200
+         // ground.position.x = -50
+         // ground.rotation.x = Math.PI / 2
+         // ground.receiveShadow = true
+         // // scene.add(ground)
 
          renderer = new THREE.WebGLRenderer({
             antialias: true,
             alpha: true,
          })
          renderer.autoClear = false
-         renderer.shadowMapType = THREE.PCFSoftShadowMap
+         renderer.shadowMap.type = THREE.PCFSoftShadowMap
          renderer.shadowMapEnabled = true
          renderer.shadowMapSoft = true
          renderer.setClearColor(0x000000, 0)
@@ -1110,22 +1224,28 @@ var Apps = function () {
       }
       return finallyPointsPath
    }
-
    let interval = setInterval(() => {
       globalVal.oldPoints = false
       generateCurve()
-   }, (lastTime = 5000))
+   }, (lastTime = 8000))
 
    function generateCurve(flag, newPoints) {
-      if (group) group.remove()
+
+      if (group) {
+         group.remove()
+      }
+
+      // if (group1) {
+      //    group1.remove()
+      // }
 
       if (SpecialCurveLine) {
          let newTestSpecial = new SpecialCurveLine()
 
          newTestSpecial.getGeometry(true, newPoints)
-         group = newTestSpecial.obj
 
-         // console.log(group.children[0].geometry)
+         group = newTestSpecial.obj
+         // group1 = newTestSpecial.cloneMesh
 
          group.remove = () => {
             newTestSpecial.remove()
@@ -1171,21 +1291,29 @@ var Apps = function () {
       mouseXOnMouseDown = event.clientX - windowHalfX
       targetRotationOnMouseDown = targetRotation
    }
-
+   let intervalAfterMouseMove
    function onDocumentMouseMove(event) {
       mouseX = event.clientX - windowHalfX
+
+      clearTimeout(intervalAfterMouseMove)
 
       targetRotation =
          targetRotationOnMouseDown + (mouseX - mouseXOnMouseDown) * 0.02
 
       clearInterval(interval)
+
+      intervalAfterMouseMove = setTimeout(() => {
+         globalVal.oldPoints = false
+         generateCurve()
+         interval = setInterval(() => {
+            globalVal.oldPoints = false
+            generateCurve()
+         }, 8000)
+      }, 15000)
+
       if (globalVal.isTimeGenerate === true) {
          globalVal.isTimeGenerate = false
-         createGuiMenu(
-            globalVal.isTimeGenerate,
-            globalVal.renderObj,
-            globalVal.guiMenuIsCreate
-         )
+         // createGuiMenu(globalVal.isTimeGenerate, globalVal.renderObj, globalVal.guiMenuIsCreate)
       }
    }
 
@@ -1243,6 +1371,7 @@ var Apps = function () {
    }
 
    function animate() {
+      // globalVal.trackballControls.update()
       requestAnimationFrame(animate)
       // controls.update();
       render()
@@ -1250,7 +1379,9 @@ var Apps = function () {
    }
 
    function render() {
+      // group.rotation.y += (targetRotation - group.rotation.y) * 0.05
       group.rotation.y += (targetRotation - group.rotation.y) * 0.05
+      // group1.rotation.y += (targetRotation - group.rotation.y) * 0.05
       camera.updateMatrixWorld()
       renderer.clear()
       renderer.render(scene, camera)
