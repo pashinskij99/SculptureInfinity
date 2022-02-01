@@ -20,14 +20,7 @@ function CubicPoly() {
       c1 = 0,
       c2 = 0,
       c3 = 0
-   /*
-    * Compute coefficients for a cubic polynomial
-    *   p(s) = c0 + c1*s + c2*s^2 + c3*s^3
-    * such that
-    *   p(0) = x0, p(1) = x1
-    *  and
-    *   p'(0) = t0, p'(1) = t1.
-    */
+
    function init(x0, x1, t0, t1) {
       c0 = x0
       c1 = t0
@@ -197,10 +190,10 @@ class CatmullRomCurve3 extends Curve {
 CatmullRomCurve3.prototype.isCatmullRomCurve3 = true
 
 var Apps = function () {
-   var container, stats
+   var container 
 
    var camera, scene, renderer
-   var group, group1
+   var group
 
    var targetRotation = 5.2
    var targetRotationOnMouseDown = 0
@@ -213,7 +206,7 @@ var Apps = function () {
    var windowHalfX = window.innerWidth / 2
    var windowHalfY = window.innerHeight / 2
    const plastic = THREE.ImageUtils.loadTexture('img/plastic.jpg', false)
-   var controls,
+   var 
       translBlock = 'back',
       dftMaterial = new THREE.MeshPhongMaterial({
          side: THREE.DoubleSide,
@@ -223,37 +216,15 @@ var Apps = function () {
          emissive: 0x8f8f8f,
          color: 0xffffff,
       }),
-      varlastMater,
       lastMater,
       texture1,
       metal,
       lastFon,
       fon = [],
-      countOfPoints = 20,
       points = false
 
    var nEnd = 0, nMax, nStep = 90;
 
-   class CustomSinCurve extends THREE.Curve {
-
-      constructor( scale = 1 ) {
-   
-         super();
-   
-         this.scale = scale;
-   
-      }
-   
-      getPoint( t, optionalTarget = new THREE.Vector3() ) {
-   
-         const tx = t * 1 - 1.5;
-         const ty = 0;
-         const tz = 0;
-   
-         return optionalTarget.set( tx, ty, tz ).multiplyScalar( this.scale );
-      }
-   
-   }
    class SpecialCurveLine {
       constructor(options = {}) {
             this.cycles = options.cycles || Math.PI * 15
@@ -268,8 +239,6 @@ var Apps = function () {
             this.points = this.generatePoints(5)
             this.curve = this.generateCurve()
             this.mesh = this.getMesh()
-
-
 
             this.size = globalVal.size
 
@@ -299,10 +268,8 @@ var Apps = function () {
          const splinePointB = points.points[points.points.length - 1]
          let spherePatchA = new THREE.SphereGeometry(rad, 10, 10)
          spherePatchA = this.translateGrometry(spherePatchA, splinePointA)
-         // tubeGeometry.merge(spherePatchA)
          let spherePatchB = new THREE.SphereGeometry(rad, 10, 10)
          spherePatchB = this.translateGrometry(spherePatchB, splinePointB)
-         // tubeGeometry.merge(spherePatchB)
 
          return tubeGeometry
       }
@@ -316,9 +283,6 @@ var Apps = function () {
          let nextGeometry = new THREE.TubeGeometry( globalVal.points, 256, rad, 16)
          nextGeometry = new THREE.BufferGeometry().fromGeometry(nextGeometry)
          nMax = nextGeometry.attributes.position.count;
-         // nextGeometry = new THREE.BufferGeometry().fromGeometry( nextGeometry );
-         // let nMax = nextGeometry.attributes.position.count;
-         // nextGeometry = this.patchGeometry(rad, nextGeometry, globalVal.points )
          return nextGeometry
       }
 
@@ -476,73 +440,21 @@ var Apps = function () {
              0.8
          ) // 1 круглые  // 0.7 более ровные
 
-         // points.pop()
 
          const halfPathPoints = nextCurve.getPoints( 50 );
-         // console.log( {
-         //    halfPathPoints
-         // } );
-
-         // const startSegment = [
-         //    this.points[ 1 ].clone(),
-         //    this.points[ 0 ].clone()
-         // ];
-         
-         // const endSegment = [
-         //    this.points[ this.points.length - 2 ].clone(),
-         //    this.points[ this.points.length - 1 ].clone()
-         // ];
-         //
-         // const startSegment = [
-         //    halfPathPoints[ 1 ].clone(),
-         //    halfPathPoints[ 0 ].clone()
-         // ];
-
-         // const endSegment = [
-         //    halfPathPoints[ halfPathPoints.length - 2 ].clone(),
-         //    halfPathPoints[ halfPathPoints.length - 1 ].clone()
-         // ];
-
-         // const prePoints = this.getToCenterPositions( startSegment );
-         // const postPoints = this.getToCenterPositions( endSegment );
 
          this.pointsForStartTube = []
          this.pointsForLastTube = []
-
-         // for( const nextPrePoint of prePoints ){
-         //    halfPathPoints.unshift( nextPrePoint );
-         //    // this.pointsForStartTube.push( nextPrePoint );
-         // }
-         //
-         // for( const nextPostPoint of postPoints ){
-         //    halfPathPoints.push( nextPostPoint );
-         //    // this.pointsForLastTube.push( nextPostPoint );
-         // }
 
          nextCurve = new CatmullRomCurve3(
              halfPathPoints,
              false,
          ) // 1 круглые  // 0.7 более ровные
 
-         halfPathPoints.pop()
-         halfPathPoints.pop()
-         halfPathPoints.pop()
-         halfPathPoints.pop()
-         halfPathPoints.pop()
-         halfPathPoints.pop()
-         halfPathPoints.pop()
-         halfPathPoints.pop()
-         halfPathPoints.pop()
-
-         halfPathPoints.shift()
-         halfPathPoints.shift()
-         halfPathPoints.shift()
-         halfPathPoints.shift()
-         halfPathPoints.shift()
-         halfPathPoints.shift()
-         halfPathPoints.shift()
-         halfPathPoints.shift()
-         halfPathPoints.shift()
+         for (let i = 0; i <= 8; i++) {
+            halfPathPoints.pop()
+            halfPathPoints.shift()
+         }
 
          this.nextCurve = nextCurve
       }
@@ -638,20 +550,17 @@ var Apps = function () {
             nextSegmentsPackSignature = !nextSegmentsPackSignature
          }
 
-         for (const a of finallySegments) {
-         }
-
          return finallySegments
       }
 
       filterPointsArray(minLength, pointsPath, finallyPointsPath) {
          while (pointsPath.length) {
             const nextPoint = pointsPath.shift()
-            if (finallyPointsPath.length > 1) {
+            if (finallyPointsPath.length > 2) {
                // 160
                if (
                   finallyPointsPath.filter((a) => {
-                     return a.distanceTo(nextPoint) < 190
+                     return a.distanceTo(nextPoint) < 195
                   }).length
                ) {
                   pointsPath.push(nextPoint)
@@ -692,10 +601,8 @@ var Apps = function () {
                break
             }
          }
-         // finallyPointsPath.shift()
          finallyPointsPath.shift()
          finallyPointsPath.shift()
-         // finally filter
          for (let i = 0; i < finallyPointsPath.length; i++) {
             const alpha = i / finallyPointsPath.length
             const range = 1
@@ -805,7 +712,6 @@ var Apps = function () {
                fon[2].src = 'img/FON_3.jpg'
                fon[2].onload = function () {
                   lastFon = fon[0]
-                  // document.getElementById('main').appendChild(lastFon)
                   init()
                   animate()
                   guiObj.init()
@@ -987,7 +893,6 @@ var Apps = function () {
          /*
           * lights
           * */
-         // var ambiLight = new THREE.AmbientLight(0x111111)
          var ambiLight = new THREE.AmbientLight(0xffffff)
          ambiLight.intensity = .2
          scene.add(ambiLight)
@@ -1032,39 +937,7 @@ var Apps = function () {
          scene.add(spotLightForShadow)
          scene.add(spotLightForShadowTarget)
 
-         // const spotLightForShadowHelper = new THREE.CameraHelper(spotLightForShadow.shadow.camera)
-         // scene.add(spotLightForShadowHelper)
-
-         // const track = new THREE.TrackballControls(camera, container)
-         // track.update()
-         // globalVal.trackballControls = track
-
-         // const anim = () => {
-         //    track.update()
-         //    requestAnimationFrame(anim)
-         // }
-
-         // console.log(camera) //position, quaternion, rotation
-         // console.log(planeMesh)
-
-         // const spotLightHelper = new THREE.SpotLightHelper( spotLight );
-         // scene.add( spotLightHelper );
-
          generateCurve(true, globalVal.size)
-         //start!!!
-         /*
-          * floor
-          * */
-         // var geometry = new THREE.BoxGeometry(5, 10, 0.2)
-         // THREE.ShaderLib['basic'].fragmentShader = basicFragmentShader(false)
-         // var material = new THREE.MeshBasicMaterial()
-         // var ground = new THREE.Mesh(geometry, material)
-         // ground.scale.multiplyScalar(250) // 250
-         // ground.position.y = -200
-         // ground.position.x = -50
-         // ground.rotation.x = Math.PI / 2
-         // ground.receiveShadow = true
-         // // scene.add(ground)
 
          renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -1119,116 +992,6 @@ var Apps = function () {
       renderer.setSize(window.innerWidth, window.innerHeight)
    }
 
-   function generatePoints(minLength = 4) {
-      let resultPoints
-
-      while (!resultPoints) {
-         const nextTestPoints = getRandomPoints(minLength)
-         if (nextTestPoints.length < minLength) {
-         } else {
-            resultPoints = nextTestPoints
-            break
-         }
-      }
-      return resultPoints
-   }
-
-   function getRandomPoints(minLength) {
-      //5000 default
-      const pointsCount = 10050
-      const maxDistanceToCenter = 200
-      const pointsPath = []
-      const yOffset = 150
-
-      const startPoint = new THREE.Vector3(0, -yOffset / 2, 0)
-      // const startPoint = new THREE.Vector3( 0, -yOffset/2, 0 );
-
-      const max = 0.4,
-         min = 0.2
-
-      const getAvailableRandomPoint = (yAddOff) => {
-         const nextRandomPoint = new THREE.Vector3(
-            -0.4 + Math.random(),
-            -0.1 + Math.random(),
-            -Math.random() * (max - min) + min
-         )
-         nextRandomPoint.normalize()
-         nextRandomPoint.multiplyScalar(
-            maxDistanceToCenter * (-1 + Math.random() * 1)
-         )
-         nextRandomPoint.y += yOffset + yAddOff
-         return nextRandomPoint
-      }
-
-      for (let i = pointsPath.length; i < pointsCount; i++) {
-         const nextPathPoint = getAvailableRandomPoint((i / pointsCount) * 1110) // 10
-         pointsPath.push(nextPathPoint)
-      }
-
-      const finallyPointsPath = [
-         new THREE.Vector3(0, yOffset, 0),
-         new THREE.Vector3(0, yOffset, yOffset),
-      ]
-
-      while (pointsPath.length) {
-         const nextPoint = pointsPath.shift()
-         if (finallyPointsPath.length > 2) {
-            const previousPoint2 =
-               finallyPointsPath[finallyPointsPath.length - 2]
-            const previousPoint1 =
-               finallyPointsPath[finallyPointsPath.length - 1]
-
-            const lastOffset = previousPoint2
-               .clone()
-               .sub(previousPoint1.clone())
-            lastOffset.normalize()
-            const currentOffset = previousPoint1.clone().sub(nextPoint.clone())
-            currentOffset.normalize()
-
-            const directionIsAvailable =
-               currentOffset.distanceTo(lastOffset) < 1
-            const distanceIsAvailable =
-               nextPoint.distanceTo(previousPoint1) < 150
-
-            if (directionIsAvailable && distanceIsAvailable) {
-               finallyPointsPath.push(nextPoint)
-            } else {
-               // pointsPath.push( nextPoint );
-            }
-         } else {
-            finallyPointsPath.push(nextPoint)
-         }
-
-         if (finallyPointsPath.length >= minLength + 1116) {
-            // повороты
-            break
-         }
-      }
-
-      finallyPointsPath.shift()
-      finallyPointsPath.shift()
-      finallyPointsPath.shift()
-
-      // finally filter
-      for (let i = 0; i < finallyPointsPath.length; i++) {
-         const alpha = i / finallyPointsPath.length
-         const range = 1
-         const shakeOffset = 1
-         const alphaOffset = range / 3 + alpha * range
-
-         finallyPointsPath[i].x +=
-            shakeOffset / 1 + (Math.random() * shakeOffset) / 1
-         finallyPointsPath[i].y +=
-            shakeOffset / 8 + (Math.random() * shakeOffset) / 6
-         finallyPointsPath[i].z +=
-            -(shakeOffset / 8) + (Math.random() * shakeOffset) / 2
-
-         finallyPointsPath[i].x += alphaOffset
-         finallyPointsPath[i].y += alphaOffset
-         finallyPointsPath[i].z += alphaOffset
-      }
-      return finallyPointsPath
-   }
    let interval = setInterval(() => {
       globalVal.oldPoints = false
       generateCurve()
@@ -1240,17 +1003,12 @@ var Apps = function () {
          group.remove()
       }
 
-      // if (group1) {
-      //    group1.remove()
-      // }
-
       if (SpecialCurveLine) {
          let newTestSpecial = new SpecialCurveLine()
 
          newTestSpecial.getGeometry(true, newPoints)
 
          group = newTestSpecial.obj
-         // group1 = newTestSpecial.cloneMesh
 
          group.remove = () => {
             newTestSpecial.remove()
@@ -1376,74 +1134,15 @@ var Apps = function () {
    }
 
    function animate() {
-      // if(nEnd < 23000) {
-         // nEnd = ( nEnd + (nStep) ) % nMax;
-      // }
-      // if(nEnd > 0) {
-      //    console.log(globalVal.lastMesh.geometry.drawRange)
-      // }
-
-      // globalVal.lastMesh.geometry.setDrawRange(0, nEnd)
-      // globalVal.trackballControls.update()
       requestAnimationFrame(animate)
-      // controls.update();
       render()
-      //stats.update();
    }
 
    function render() {
-      // group.rotation.y += (targetRotation - group.rotation.y) * 0.05
       group.rotation.y += (targetRotation - group.rotation.y) * 0.05
-      // group1.rotation.y += (targetRotation - group.rotation.y) * 0.05
       camera.updateMatrixWorld()
       renderer.clear()
       renderer.render(scene, camera)
-   }
-
-   function basicFragmentShader(state) {
-      return [
-         'uniform vec3 diffuse;',
-         'uniform float opacity;',
-
-         THREE.ShaderChunk['common'],
-         THREE.ShaderChunk['color_pars_fragment'],
-         THREE.ShaderChunk['map_pars_fragment'],
-         THREE.ShaderChunk['alphamap_pars_fragment'],
-         THREE.ShaderChunk['lightmap_pars_fragment'],
-         THREE.ShaderChunk['envmap_pars_fragment'],
-         THREE.ShaderChunk['fog_pars_fragment'],
-         THREE.ShaderChunk['shadowmap_pars_fragment'],
-         THREE.ShaderChunk['specularmap_pars_fragment'],
-         THREE.ShaderChunk['logdepthbuf_pars_fragment'],
-
-         'void main() {',
-
-         '	vec3 outgoingLight = vec3( 0.0 );', // outgoing light does not have an alpha, the surface does
-         '	vec4 diffuseColor = vec4( diffuse, opacity );',
-
-         THREE.ShaderChunk['logdepthbuf_fragment'],
-         THREE.ShaderChunk['map_fragment'],
-         THREE.ShaderChunk['color_fragment'],
-         THREE.ShaderChunk['alphamap_fragment'],
-         THREE.ShaderChunk['alphatest_fragment'],
-         THREE.ShaderChunk['specularmap_fragment'],
-
-         '	outgoingLight = diffuseColor.rgb;', // simple shader
-
-         THREE.ShaderChunk['lightmap_fragment'], // TODO: Light map on an otherwise unlit surface doesn't make sense.
-         THREE.ShaderChunk['envmap_fragment'],
-         THREE.ShaderChunk['shadowmap_fragment'], // TODO: Shadows on an otherwise unlit surface doesn't make sense.
-
-         THREE.ShaderChunk['linear_to_gamma_fragment'],
-
-         THREE.ShaderChunk['fog_fragment'],
-
-         state === false
-            ? 'gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 - shadowColor.x );'
-            : 'gl_FragColor = vec4( outgoingLight, diffuseColor.a );',
-
-         '}',
-      ].join('\n')
    }
 
    function changeTexture(val) {
@@ -1461,64 +1160,7 @@ var Apps = function () {
          group.children[i].material = material
       }
    }
-
-   /*App.types = {
-     skyBox: '',
-     urlImg: 'img/',
-     backgroundContainer: ''
-     }
-     App.rebuildSkyBox = {
-     changeBackground: function (id) {
-     var imagePrefix, skyBox = App.types.skyBox, playVideoBack = App.types.backgroundContainer;
-     switch (id) {
-     case 'mountain':
-     imagePrefix = ['dawnmountain-xpos.png', 'dawnmountain-xneg.png', 'dawnmountain-ypos.png',
-     'dawnmountain-yneg.png', 'dawnmountain-zpos.png', 'dawnmountain-zneg.png'];
-     break;
-     case 'siege':
-     imagePrefix = ['siege_ft.png', 'siege_bk.png', 'siege_up.png',
-     'siege_dn.png', 'siege_rt.png', 'siege_lf.png'];
-     break;
-     case 'starfield':
-     imagePrefix = ['starfield_ft.png', 'starfield_bk.png', 'starfield_up.png',
-     'starfield_dn.png', 'starfield_rt.png', 'starfield_lf.png'];
-     break;
-     case 'misty':
-     imagePrefix = ['misty_ft.png', 'misty_bk.png', 'misty_up.png',
-     'misty_dn.png', 'misty_rt.png', 'misty_lf.png'];
-     break;
-     case 'tidepool':
-     imagePrefix = ['tidepool_ft.png', 'tidepool_bk.png', 'tidepool_up.png',
-     'tidepool_dn.png', 'tidepool_rt.png', 'tidepool_lf.png'];
-     break;
-
-     }
-     var materialArray = [];
-     for (var i = 0; i < 6; i++) {
-     var matr = new THREE.MeshBasicMaterial({
-     map: THREE.ImageUtils.loadTexture(App.types.urlImg + imagePrefix[i]),
-     side: THREE.BackSide
-     });
-     materialArray.push(matr);
-     }
-     skyBox.material = new THREE.MeshFaceMaterial(materialArray);
-     },//add background
-     add: function () {
-     var imagePrefix = ['dawnmountain-xpos.png', 'dawnmountain-xneg.png', 'dawnmountain-ypos.png',
-     'dawnmountain-yneg.png', 'dawnmountain-zpos.png', 'dawnmountain-zneg.png'], materialArray = [],
-     skyGeometry = new THREE.BoxGeometry(10000, 10000, 10000), skyBox;
-     for (var i = 0; i < 6; i++)
-     materialArray.push(new THREE.MeshBasicMaterial({
-     map: THREE.ImageUtils.loadTexture(App.types.urlImg + imagePrefix[i]),
-     side: THREE.DoubleSide
-     }));
-     skyBox = new THREE.Mesh(skyGeometry, new THREE.MeshFaceMaterial(materialArray));
-     scene.add(skyBox);
-     App.types.skyBox = skyBox;
-     }//add background
-     };//settings for background*/
 }
 $(document).ready(function () {
    new Apps()
-   // App.rebuildSkyBox.add();
 })
