@@ -10,7 +10,7 @@ const globalVal = {
    renderObj: null,
    guiMenuIsCreate: null,
    isTimeGenerate: false,
-   trackballControls: null
+   trackballControls: null,
 }
 
 let SCENE = null;
@@ -232,6 +232,8 @@ var Apps = function () {
       countOfPoints = 20,
       points = false
 
+   var nEnd = 0, nMax, nStep = 90;
+
    class CustomSinCurve extends THREE.Curve {
 
       constructor( scale = 1 ) {
@@ -267,6 +269,8 @@ var Apps = function () {
             this.curve = this.generateCurve()
             this.mesh = this.getMesh()
 
+
+
             this.size = globalVal.size
 
             this.mesh.meshForShadow.scale.set(0.3, 0.3, 0.3)
@@ -278,6 +282,8 @@ var Apps = function () {
 
             this.generateSegmentsLength()
       }
+
+
 
       translateGrometry(geometry, offset) {
          for (const nextVertex of geometry.vertices) {
@@ -293,10 +299,10 @@ var Apps = function () {
          const splinePointB = points.points[points.points.length - 1]
          let spherePatchA = new THREE.SphereGeometry(rad, 10, 10)
          spherePatchA = this.translateGrometry(spherePatchA, splinePointA)
-         tubeGeometry.merge(spherePatchA)
+         // tubeGeometry.merge(spherePatchA)
          let spherePatchB = new THREE.SphereGeometry(rad, 10, 10)
          spherePatchB = this.translateGrometry(spherePatchB, splinePointB)
-         tubeGeometry.merge(spherePatchB)
+         // tubeGeometry.merge(spherePatchB)
 
          return tubeGeometry
       }
@@ -308,9 +314,11 @@ var Apps = function () {
                     : this.nextCurve
          const rad = globalVal.size ? globalVal.size : 3
          let nextGeometry = new THREE.TubeGeometry( globalVal.points, 256, rad, 16)
+         nextGeometry = new THREE.BufferGeometry().fromGeometry(nextGeometry)
+         nMax = nextGeometry.attributes.position.count;
          // nextGeometry = new THREE.BufferGeometry().fromGeometry( nextGeometry );
          // let nMax = nextGeometry.attributes.position.count;
-         nextGeometry = this.patchGeometry(rad, nextGeometry, globalVal.points )
+         // nextGeometry = this.patchGeometry(rad, nextGeometry, globalVal.points )
          return nextGeometry
       }
 
@@ -465,7 +473,7 @@ var Apps = function () {
              points,
              false,
              'catmullrom',
-             0.9
+             0.8
          ) // 1 круглые  // 0.7 более ровные
 
          // points.pop()
@@ -479,21 +487,21 @@ var Apps = function () {
          //    this.points[ 1 ].clone(),
          //    this.points[ 0 ].clone()
          // ];
-         //
+         
          // const endSegment = [
          //    this.points[ this.points.length - 2 ].clone(),
          //    this.points[ this.points.length - 1 ].clone()
          // ];
          //
-         const startSegment = [
-            halfPathPoints[ 1 ].clone(),
-            halfPathPoints[ 0 ].clone()
-         ];
+         // const startSegment = [
+         //    halfPathPoints[ 1 ].clone(),
+         //    halfPathPoints[ 0 ].clone()
+         // ];
 
-         const endSegment = [
-            halfPathPoints[ halfPathPoints.length - 2 ].clone(),
-            halfPathPoints[ halfPathPoints.length - 1 ].clone()
-         ];
+         // const endSegment = [
+         //    halfPathPoints[ halfPathPoints.length - 2 ].clone(),
+         //    halfPathPoints[ halfPathPoints.length - 1 ].clone()
+         // ];
 
          // const prePoints = this.getToCenterPositions( startSegment );
          // const postPoints = this.getToCenterPositions( endSegment );
@@ -563,16 +571,16 @@ var Apps = function () {
       }
 
       generateSegmentsLength() {
-         const minimalLength = 1155
-         const maximumLength = 1220
-         const availableLineLength = 1500
-         let nextSegmentsPackSignature = Math.random() > 0.5 ? 1 : -1 // 1 \ -1
+         const minimalLength = 111155
+         const maximumLength = 111220
+         const availableLineLength = 111500
+         let nextSegmentsPackSignature = Math.random() > 0.5 ? 11 : -11 // 1 \ -1
          const getRandomRange = (_min, _max) => {
             const a = Math.min(_min, _max)
             const b = Math.max(_min, _max)
             return a + (b - a) * Math.random()
          }
-         const segments = [getRandomRange(5, 10)]
+         const segments = [getRandomRange(5, 110)]
          let currentLineLength = 0
          let lastSegmentLength = segments[0]
          const createNextSegmentsPack = (
@@ -596,7 +604,7 @@ var Apps = function () {
 
          const finallySegments = []
 
-         let test = 1115
+         let test = 111115
          let needStop
 
          while (currentLineLength < availableLineLength) {
@@ -668,7 +676,7 @@ var Apps = function () {
                   currentOffset.distanceTo(lastOffset) < -132.1
                const nextPointDistance = nextPoint.distanceTo(previousPoint1)
                const distanceIsAvailable =
-                  nextPointDistance > 710 && nextPointDistance < 1420
+                  nextPointDistance > 1710 && nextPointDistance < 11420
 
                if (directionIsAvailable && distanceIsAvailable) {
                   finallyPointsPath.push(nextPoint)
@@ -684,7 +692,7 @@ var Apps = function () {
                break
             }
          }
-         finallyPointsPath.shift()
+         // finallyPointsPath.shift()
          finallyPointsPath.shift()
          finallyPointsPath.shift()
          // finally filter
@@ -706,7 +714,7 @@ var Apps = function () {
       }
 
       getRandomPoints(minLength) {
-         const pointsCount = 15500
+         const pointsCount = 115500
          const maxDistanceToCenter = 200 // 200
          const pointsPath = []
          const yOffset = 50
@@ -800,7 +808,7 @@ var Apps = function () {
                   // document.getElementById('main').appendChild(lastFon)
                   init()
                   animate()
-                  // guiObj.init()
+                  guiObj.init()
                }
             }
          }
@@ -818,7 +826,6 @@ var Apps = function () {
       if (isTimeGenerate) {
          interval = setInterval(() => {
             globalVal.oldPoints = false
-            console.log('createguiadd')
             generateCurve()
          }, (lastTime = 8000))
          const btnTimerMakeSculpture = guiMenu
@@ -911,7 +918,7 @@ var Apps = function () {
          .onChange(() => {
             globalVal.guiMenuIsCreate = guiMenu
             globalVal.isTimeGenerate = !globalVal.isTimeGenerate
-            // createGuiMenu(globalVal.isTimeGenerate, globalVal.renderObj, globalVal.guiMenuIsCreate)
+            createGuiMenu(globalVal.isTimeGenerate, globalVal.renderObj, globalVal.guiMenuIsCreate)
          })
 
       globalVal.guiMenuIsCreate = guiMenu
@@ -956,7 +963,7 @@ var Apps = function () {
             changeTexture: function () {},
          }
          globalVal.renderObj = renderObj
-         // createGuiMenu(globalVal.isTimeGenerate, renderObj, globalVal.guiMenuIsCreate)
+         createGuiMenu(globalVal.isTimeGenerate, renderObj, globalVal.guiMenuIsCreate)
       },
    }
    try {
@@ -1011,8 +1018,6 @@ var Apps = function () {
          planeMesh.castShadow = false
          planeMesh.name = "Plane"
          scene.add(planeMesh)
-
-         console.log(scene);
 
          const spotLightForShadow = new THREE.SpotLight(0xffffff, 0.4, 35600, Math.PI * 0.3),
              spotLightForShadowTarget = spotLightForShadow.target
@@ -1313,7 +1318,7 @@ var Apps = function () {
 
       if (globalVal.isTimeGenerate === true) {
          globalVal.isTimeGenerate = false
-         // createGuiMenu(globalVal.isTimeGenerate, globalVal.renderObj, globalVal.guiMenuIsCreate)
+         createGuiMenu(globalVal.isTimeGenerate, globalVal.renderObj, globalVal.guiMenuIsCreate)
       }
    }
 
@@ -1371,6 +1376,14 @@ var Apps = function () {
    }
 
    function animate() {
+      // if(nEnd < 23000) {
+         // nEnd = ( nEnd + (nStep) ) % nMax;
+      // }
+      // if(nEnd > 0) {
+      //    console.log(globalVal.lastMesh.geometry.drawRange)
+      // }
+
+      // globalVal.lastMesh.geometry.setDrawRange(0, nEnd)
       // globalVal.trackballControls.update()
       requestAnimationFrame(animate)
       // controls.update();
